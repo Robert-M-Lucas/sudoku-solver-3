@@ -1,7 +1,6 @@
 use std::hint::black_box;
 use std::time::Instant;
 use thousands::Separable;
-use board::Possibilities;
 use solution::Solution;
 use crate::solver::solve_backtracking;
 

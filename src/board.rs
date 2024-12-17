@@ -58,6 +58,7 @@ impl SudokuPossibility {
         self.0 &= mask;
     }
 
+    #[allow(dead_code)]
     pub fn slow_find(self) -> Option<u8> {
         let mut found = 9;
         for i in 0..9 {
