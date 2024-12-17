@@ -1,3 +1,4 @@
+use itertools::iproduct;
 use crate::board::Possibilities;
 use crate::solution::Solution;
 
@@ -158,6 +159,49 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                         to_revert.push((x as u8, *y));
                         possibilities.update_found(x, *y as usize, n as u8);
                     }
+                }
+            }
+        }
+
+        for (sy, sx) in iproduct!(0..3, 0..3) {
+            singles_data = [9; 9];
+
+            for (cy, cx) in iproduct!(0..3, 0..3) {
+                let (x, y) = (sx*3 + cx, sy * 3 + cy);
+
+                let sg = solution.get(x, y);
+                if sg != 9 {
+                    singles_data[sg as usize] = 10;
+                    continue;
+                }
+
+                let cell_possibilities = possibilities.get(x, y);
+
+                for n in 0..9 {
+                    if cell_possibilities.has(n) {
+                        if singles_data[n as usize] == 9 {
+                            singles_data[n as usize] = cy as u8 * 3 + cx as u8;
+                        }
+                        else {
+                            singles_data[n as usize] = 10;
+                        }
+                    }
+                }
+            }
+
+            for (n, sc) in singles_data.iter().enumerate() {
+                if *sc <= 8 {
+                    let (x, y) = ((sx as u8 * 3 + (sc % 3)) as usize, (sy as u8 * 3 + (*sc / 3)) as usize);
+
+                    if solution.get(x, y) != 9 {
+                        solution.undo(&to_revert);
+                        return;
+                    }
+
+                    solution.set(x, y, n as u8);
+                    change = true;
+                    to_revert.push((x as u8, y as u8));
+                    possibilities.update_found(x, y, n as u8);
                 }
             }
         }
