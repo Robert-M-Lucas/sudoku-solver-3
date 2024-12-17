@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::fmt::{Debug, Display, Formatter};
 use itertools::{iproduct, Itertools};
 use crate::solution::Solution;
@@ -191,6 +192,31 @@ impl Display for Possibilities {
             }
         }
         write!(f, "╚═══════════════════════╩═══════════════════════╩═══════════════════════╝")?;
+
+        Ok(())
+    }
+}
+
+impl Debug for Possibilities {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut max_len = 0;
+        for row in self.0 {
+            for p in row {
+                max_len = max(max_len, format!("{}", p.mask()).len());
+            }
+        }
+
+        for row in self.0 {
+            for p in row {
+                let s = format!("{}", p.mask());
+                for _ in 0..((max_len - s.len()) + 1) {
+                    write!(f, " ")?;
+                }
+                write!(f, "{}", s)?;
+
+            }
+            write!(f, "\n")?;
+        }
 
         Ok(())
     }

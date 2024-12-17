@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::path::Path;
 use std::fs;
 
+#[derive(Clone)]
 pub struct Solution {
     inner: [[u8; 9]; 9],
     remaining: u8,

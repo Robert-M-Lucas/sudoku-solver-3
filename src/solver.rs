@@ -31,7 +31,6 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
     // 10 - Has appeared more than once | -2
     let mut singles_data = [9u8; 9];
 
-    let mut lowest = 10;
     let mut lowest_pos = None;
 
     while change {
@@ -40,6 +39,7 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
         }
 
         change = false;
+        let mut lowest = 10;
 
         for y in 0..9 {
             if first_pass {
@@ -51,14 +51,15 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                 if sg != 9 {
                     if first_pass {
                         singles_data[sg as usize] = 10;
-                        continue;
                     }
+                    continue;
                 }
 
                 let cell_possibilities = possibilities.get(x, y);
                 let count = cell_possibilities.bits_set();
 
                 if count == 0 {
+                    // println!("A");
                     solution.undo(&to_revert);
                     return;
                 }
@@ -87,9 +88,9 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                             if singles_data[n as usize] == 9 {
                                 singles_data[n as usize] = x as u8;
                             }
-                        }
-                        else {
-                            singles_data[n as usize] = 10;
+                            else {
+                                singles_data[n as usize] = 10;
+                            }
                         }
                     }
                 }
@@ -121,9 +122,7 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
         first_pass = false;
 
         for x in 0..9 {
-            if first_pass {
-                singles_data = [9; 9];
-            }
+            singles_data = [9; 9];
 
             for y in 0..9 {
                 let sg = solution.get(x, y);
@@ -139,29 +138,28 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                         if singles_data[n as usize] == 9 {
                             singles_data[n as usize] = y as u8;
                         }
-                    }
-                    else {
-                        singles_data[n as usize] = 10;
+                        else {
+                            singles_data[n as usize] = 10;
+                        }
                     }
                 }
             }
 
-            if first_pass {
-                for (n, y) in singles_data.iter().enumerate() {
-                    if *y <= 8 {
-                        if solution.get(x, *y as usize) != 9 {
-                            solution.undo(&to_revert);
-                            return;
-                        }
-
-                        solution.set(x, *y as usize, n as u8);
-                        change = true;
-                        to_revert.push((x as u8, *y));
-                        possibilities.update_found(x, *y as usize, n as u8);
+            for (n, y) in singles_data.iter().enumerate() {
+                if *y <= 8 {
+                    if solution.get(x, *y as usize) != 9 {
+                        solution.undo(&to_revert);
+                        return;
                     }
+
+                    solution.set(x, *y as usize, n as u8);
+                    change = true;
+                    to_revert.push((x as u8, *y));
+                    possibilities.update_found(x, *y as usize, n as u8);
                 }
             }
         }
+
 
         for (sy, sx) in iproduct!(0..3, 0..3) {
             singles_data = [9; 9];
@@ -211,7 +209,11 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
         return;
     }
 
+
     let (x, y) = lowest_pos.unwrap();
+    // println!("{x} {y}");
+    // return;
+
     to_revert.push((x as u8, y as u8));
     let cell_possibilites = possibilities.get(x, y);
     for n in 0..9 {
