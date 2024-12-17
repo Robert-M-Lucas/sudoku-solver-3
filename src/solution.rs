@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 #[derive(Clone)]
 pub struct Solution {
@@ -10,8 +10,7 @@ pub struct Solution {
 
 impl Solution {
     pub fn load<P: AsRef<Path>>(path: P) -> Self {
-        let contents = fs::read_to_string(path)
-            .expect("File read error");
+        let contents = fs::read_to_string(path).expect("File read error");
 
         let mut board = [[9; 9]; 9];
         let mut remaining = 81;
@@ -23,7 +22,9 @@ impl Solution {
                 continue;
             }
             for (j, c) in line.chars().enumerate() {
-                if j > 8 && !c.to_string().is_empty() { panic!("Line too long in input"); } else if j > 8 {
+                if j > 8 && !c.to_string().is_empty() {
+                    panic!("Line too long in input");
+                } else if j > 8 {
                     continue;
                 }
                 if c == '_' || c == '0' {
@@ -33,14 +34,16 @@ impl Solution {
                     if let Some(n) = n {
                         board[i][j] = n as u8 - 1;
                         remaining -= 1;
-                    } else { panic!("Expected number, found {c}") }
+                    } else {
+                        panic!("Expected number, found {c}")
+                    }
                 }
             }
         }
 
         Solution {
             inner: board,
-            remaining
+            remaining,
         }
     }
 
@@ -55,8 +58,7 @@ impl Solution {
         let cur = self.inner[y][x];
         if cur != 9 && val == 9 {
             self.remaining += 1;
-        }
-        else if cur == 9 && val != 9 {
+        } else if cur == 9 && val != 9 {
             self.remaining -= 1;
         }
         self.inner[y][x] = val;
@@ -81,19 +83,16 @@ impl Display for Solution {
             for col in 0..9 {
                 let n = self.get(col, row);
                 if n != 9 {
-                    write!(f, "{}", n+1)?;
-                }
-                else {
+                    write!(f, "{}", n + 1)?;
+                } else {
                     write!(f, "-")?;
                 }
 
                 if (col + 1) % 3 == 0 && col != 8 {
                     write!(f, " │ ")?;
-                }
-                else {
+                } else {
                     write!(f, " ")?;
                 }
-
             }
             writeln!(f, "│")?;
 

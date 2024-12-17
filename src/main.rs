@@ -1,12 +1,12 @@
+use crate::solver::solve_backtracking;
+use solution::Solution;
 use std::hint::black_box;
 use std::time::Instant;
 use thousands::Separable;
-use solution::Solution;
-use crate::solver::solve_backtracking;
 
 mod board;
-mod solver;
 mod solution;
+mod solver;
 
 fn main() {
     let sample = Solution::load("data/sudoku.txt");
@@ -23,10 +23,14 @@ fn main() {
 
     if let Some(solution) = solve_backtracking(sample) {
         println!("{}", solution);
-    }
-    else {
+    } else {
         println!("No solution found");
     }
 
-    println!("Runs: {} | Duration: {:?} | Time per: {:?}", runs.separate_with_commas(), duration, duration / runs);
+    println!(
+        "Runs: {} | Duration: {:?} | Time per: {:?}",
+        runs.separate_with_commas(),
+        duration,
+        duration / runs
+    );
 }

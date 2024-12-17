@@ -1,7 +1,7 @@
-use itertools::iproduct;
-use stack_vec::StackVec128;
 use crate::board::Possibilities;
 use crate::solution::Solution;
+use itertools::iproduct;
+use stack_vec::StackVec128;
 
 pub fn solve_backtracking(mut solution: Solution) -> Option<Solution> {
     let possibilities = Possibilities::from_solution(&solution);
@@ -9,12 +9,10 @@ pub fn solve_backtracking(mut solution: Solution) -> Option<Solution> {
     recursively_attempt(possibilities, &mut solution);
     if solution.solved() {
         Some(solution)
-    }
-    else {
+    } else {
         None
     }
 }
-
 
 pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solution) {
     if solution.solved() {
@@ -89,8 +87,7 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                         if cell_possibilities.has(n) {
                             if singles_data[n as usize] == 9 {
                                 singles_data[n as usize] = x as u8;
-                            }
-                            else {
+                            } else {
                                 singles_data[n as usize] = 10;
                             }
                         }
@@ -139,8 +136,7 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                     if cell_possibilities.has(n) {
                         if singles_data[n as usize] == 9 {
                             singles_data[n as usize] = y as u8;
-                        }
-                        else {
+                        } else {
                             singles_data[n as usize] = 10;
                         }
                     }
@@ -162,12 +158,11 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
             }
         }
 
-
         for (sy, sx) in iproduct!(0..3, 0..3) {
             singles_data = [9; 9];
 
             for (cy, cx) in iproduct!(0..3, 0..3) {
-                let (x, y) = (sx*3 + cx, sy * 3 + cy);
+                let (x, y) = (sx * 3 + cx, sy * 3 + cy);
 
                 let sg = solution.get(x, y);
                 if sg != 9 {
@@ -181,8 +176,7 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                     if cell_possibilities.has(n) {
                         if singles_data[n as usize] == 9 {
                             singles_data[n as usize] = cy as u8 * 3 + cx as u8;
-                        }
-                        else {
+                        } else {
                             singles_data[n as usize] = 10;
                         }
                     }
@@ -191,7 +185,10 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
 
             for (n, sc) in singles_data.iter().enumerate() {
                 if *sc <= 8 {
-                    let (x, y) = ((sx as u8 * 3 + (sc % 3)) as usize, (sy as u8 * 3 + (*sc / 3)) as usize);
+                    let (x, y) = (
+                        (sx as u8 * 3 + (sc % 3)) as usize,
+                        (sy as u8 * 3 + (*sc / 3)) as usize,
+                    );
 
                     if solution.get(x, y) != 9 {
                         solution.undo(&to_revert);
@@ -211,7 +208,6 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
         return;
     }
 
-
     let (x, y) = lowest_pos.unwrap();
     // println!("{x} {y}");
     // return;
@@ -219,7 +215,9 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
     to_revert.push((x as u8, y as u8));
     let cell_possibilites = possibilities.get(x, y);
     for n in 0..9 {
-        if !cell_possibilites.has(n) { continue; }
+        if !cell_possibilites.has(n) {
+            continue;
+        }
 
         solution.set(x, y, n);
 
@@ -234,6 +232,4 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
     }
 
     solution.undo(&to_revert);
-
-    return;
 }
