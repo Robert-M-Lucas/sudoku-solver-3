@@ -42,11 +42,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
+name = "stack-vec"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "969d02b2cf038972b7f2d285f246044771da9fb8cc26a9d6b129236b784d3bd6"
+
+[[package]]
 name = "sudoku-solver-3"
 version = "0.1.0"
 dependencies = [
  "bitvec",
  "itertools",
+ "stack-vec",
  "thousands",
 ]
 

@@ -1,4 +1,5 @@
 use itertools::iproduct;
+use stack_vec::StackVec128;
 use crate::board::Possibilities;
 use crate::solution::Solution;
 
@@ -21,7 +22,8 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
     }
 
     // TODO: Test optimal capacities, maybe try stack vec
-    let mut to_revert: Vec<(u8, u8)> = Vec::with_capacity(8);
+    // let mut to_revert: Vec<(u8, u8)> = Vec::with_capacity(16);
+    let mut to_revert: StackVec128<(u8, u8)> = StackVec128::new();
 
     let mut change = true;
     let mut first_pass = true;
