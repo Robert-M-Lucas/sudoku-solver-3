@@ -1,7 +1,6 @@
 use std::fmt::{Debug, Display, Formatter};
-use std::path::Path;
-use std::fs;
 use itertools::{iproduct, Itertools};
+use crate::solution::Solution;
 
 #[derive(Clone, Copy)]
 pub struct SudokuPossibility(u16);
@@ -100,38 +99,17 @@ impl Display for SudokuPossibility {
     }
 }
 
-pub struct Board([[SudokuPossibility; 9]; 9]);
+pub struct Possibilities([[SudokuPossibility; 9]; 9]);
 
-impl Board {
-    pub fn load<P: AsRef<Path>>(path: P) -> Self {
-        let contents = fs::read_to_string(path)
-            .expect("File read error");
-
+impl Possibilities {
+    pub fn from_solution(solution: &Solution) -> Self {
         let board = [[SudokuPossibility::new(); 9]; 9];
-        let mut b = Board(board);
+        let mut b = Possibilities(board);
 
-        for (i, line) in contents.lines().enumerate() {
-            if i > 8 && !line.trim().is_empty() {
-                panic!("Too many lines");
-            }
-            else if i > 8 {
-                continue;
-            }
-            for (j, c) in line.chars().enumerate() {
-                if j > 8 && !c.to_string().is_empty() { panic!("Line too long in input"); }
-                else if j > 8 {
-                    continue;
-                }
-                if c == '_' || c == '0' {
-                    continue;
-                }
-                else {
-                    let n = c.to_digit(10);
-                    if let Some(n) = n {
-                        b.update_found(j, i, n as u8 - 1);
-                    }
-                    else { panic!("Expected number, found {c}") }
-                }
+        for (y, x) in iproduct!(0..9, 0..9) {
+            let val = solution.get(x, y);
+            if val != 9 {
+                b.update_found(x, y, val);
             }
         }
 
@@ -160,7 +138,7 @@ impl Board {
     }
 }
 
-impl Debug for Board {
+impl Display for Possibilities {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let strings = self.0.iter().map(|r|
             r.iter().map(|c| c.to_string()).collect_vec()
@@ -192,39 +170,6 @@ impl Debug for Board {
             }
         }
         write!(f, "╚═══════════════════════╩═══════════════════════╩═══════════════════════╝")?;
-
-        Ok(())
-    }
-}
-
-impl Display for Board {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "┌───────┬───────┬───────┐")?;
-        for row in 0..9 {
-            write!(f, "│ ")?;
-            for col in 0..9 {
-                if let Some(n) = self.0[row][col].slow_find() {
-                    write!(f, "{}", n+1)?;
-                }
-                else {
-                    write!(f, "-")?;
-                }
-
-                if (col + 1) % 3 == 0 && col != 8 {
-                    write!(f, " │ ")?;
-                }
-                else {
-                    write!(f, " ")?;
-                }
-
-            }
-            writeln!(f, "│")?;
-
-            if (row + 1) % 3 == 0 && row != 8 {
-                writeln!(f, "├───────┼───────┼───────┤")?;
-            }
-        }
-        writeln!(f, "└───────┴───────┴───────┘")?;
 
         Ok(())
     }
