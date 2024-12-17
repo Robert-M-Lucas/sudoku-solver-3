@@ -9,7 +9,14 @@ mod solution;
 fn main() {
     let sample = Solution::load("data/sudoku.txt");
 
+    println!("{}", Possibilities::from_solution(&sample));
+
     let solution = solve_backtracking(sample);
 
-    println!("{}", solution.unwrap());
+    if let Some(solution) = solution {
+        println!("{}", solution);
+    }
+    else {
+        println!("No solution found");
+    }
 }
