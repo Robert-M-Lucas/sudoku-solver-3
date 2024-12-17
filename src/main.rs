@@ -1,5 +1,6 @@
 use std::hint::black_box;
 use std::time::Instant;
+use thousands::Separable;
 use board::Possibilities;
 use solution::Solution;
 use crate::solver::solve_backtracking;
@@ -20,12 +21,13 @@ fn main() {
         black_box(solution);
     }
     let duration = start.elapsed();
-    println!("Runs: {runs} | Duration: {:?} | Time per: {:?}", duration, duration / runs);
 
-    // if let Some(solution) = solve_backtracking(sample) {
-    //     println!("{}", solution);
-    // }
-    // else {
-    //     println!("No solution found");
-    // }
+    if let Some(solution) = solve_backtracking(sample) {
+        println!("{}", solution);
+    }
+    else {
+        println!("No solution found");
+    }
+
+    println!("Runs: {} | Duration: {:?} | Time per: {:?}", runs.separate_with_commas(), duration, duration / runs);
 }
