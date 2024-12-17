@@ -20,7 +20,7 @@ fn main() {
         black_box(solution);
     }
     let duration = start.elapsed();
-    println!("Duration: {:?} | Time per: {:?}", duration, duration / runs);
+    println!("Runs: {runs} | Duration: {:?} | Time per: {:?}", duration, duration / runs);
 
     // if let Some(solution) = solve_backtracking(sample) {
     //     println!("{}", solution);
