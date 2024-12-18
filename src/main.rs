@@ -28,9 +28,10 @@ fn main() {
     }
 
     println!(
-        "Runs: {} | Duration: {:?} | Time per: {:?}",
+        "Runs: {} | Duration: {:?} | Time per: {:?} | Per second: {}",
         runs.separate_with_commas(),
         duration,
-        duration / runs
+        duration / runs,
+        (1f64 / (duration / runs).as_secs_f64()) as usize,
     );
 }

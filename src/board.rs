@@ -40,12 +40,14 @@ const NUM_LOOKUP: [u8; 257] = [
     255, 255, 255, 255, 255, 255, 255, 8,
 ];
 
+type PossibilityMask = u16;
+
 #[derive(Clone, Copy)]
-pub struct SudokuPossibility(u16);
+pub struct SudokuPossibility(PossibilityMask);
 
 impl SudokuPossibility {
     #[inline]
-    pub const fn mask(self) -> u16 {
+    pub const fn mask(self) -> PossibilityMask {
         self.0
     }
 
@@ -81,12 +83,12 @@ impl SudokuPossibility {
     }
 
     #[inline]
-    pub const fn and_mask(self, mask: u16) -> SudokuPossibility {
+    pub const fn and_mask(self, mask: PossibilityMask) -> SudokuPossibility {
         SudokuPossibility(self.0 & mask)
     }
 
     #[inline]
-    pub const fn and_mask_inplace(&mut self, mask: u16) {
+    pub const fn and_mask_inplace(&mut self, mask: PossibilityMask) {
         self.0 &= mask;
     }
 
@@ -167,7 +169,7 @@ impl Possibilities {
             .and_mask(SudokuPossibility::new_val(val).mask())
             .is_empty());
 
-        let mask: u16 = !(1 << val);
+        let mask: PossibilityMask = !(1 << val);
 
         let (cell_x, cell_y) = ((x / 3) * 3, (y / 3) * 3);
         for (yy, xx) in iproduct!(0..3, 0..3) {
