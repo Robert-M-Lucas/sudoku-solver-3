@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bitvec = "1.0.1"
+color-print = "0.3.7"
 itertools = "0.13.0"
 stack-vec = "0.1.0"
 thousands = "0.2.0"

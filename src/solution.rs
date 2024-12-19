@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::Path;
+use crate::board::Possibilities;
 
 #[derive(Clone)]
 pub struct Solution {
@@ -11,7 +12,10 @@ pub struct Solution {
 impl Solution {
     pub fn load<P: AsRef<Path>>(path: P) -> Self {
         let contents = fs::read_to_string(path).expect("File read error");
+        Self::load_string(contents)
+    }
 
+    pub fn load_string(contents: String) -> Self {
         let mut board = [[9; 9]; 9];
         let mut remaining = 81;
 
@@ -47,6 +51,23 @@ impl Solution {
         }
     }
 
+    pub fn is_valid(&self) -> bool {
+        let mut possibilites = Possibilities::new_full();
+
+        for y in 0..9 {
+            for x in 0..9 {
+                let cell = self.inner[y][x];
+                if cell == 9 { continue; }
+                if !possibilites.get(x, y).has(cell) {
+                    return false;
+                }
+                possibilites.update_found(x, y, cell);
+            }
+        }
+
+        true
+    }
+
     pub fn undo(&mut self, revert: &[(u8, u8)]) {
         for (x, y) in revert {
             self.set(*x as usize, *y as usize, 9);
@@ -72,6 +93,21 @@ impl Solution {
     #[inline]
     pub fn get(&self, x: usize, y: usize) -> u8 {
         self.inner[y][x]
+    }
+}
+
+impl PartialEq for Solution {
+    fn eq(&self, other: &Self) -> bool {
+        #[cfg(not(debug_assertions))]
+        return self.inner == other.inner;
+        #[cfg(debug_assertions)]
+        {
+            let result = self.inner == other.inner;
+            if result {
+                debug_assert!(self.remaining == other.remaining)
+            }
+            result
+        }
     }
 }
 

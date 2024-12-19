@@ -4,6 +4,11 @@ use itertools::iproduct;
 use stack_vec::StackVec128;
 
 pub fn solve_backtracking(mut solution: Solution) -> Option<Solution> {
+    // Dumb thing due to possible invalid inputs
+    if !solution.is_valid() {
+        return None;
+    }
+
     let possibilities = Possibilities::from_solution(&solution);
 
     recursively_attempt(possibilities, &mut solution);

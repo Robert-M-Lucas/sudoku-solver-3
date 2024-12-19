@@ -150,6 +150,11 @@ impl Display for SudokuPossibility {
 pub struct Possibilities([[SudokuPossibility; 9]; 9]);
 
 impl Possibilities {
+    pub fn new_full() -> Self {
+        let board = [[SudokuPossibility::new(); 9]; 9];
+        Possibilities(board)
+    }
+
     pub fn from_solution(solution: &Solution) -> Self {
         let board = [[SudokuPossibility::new(); 9]; 9];
         let mut b = Possibilities(board);
