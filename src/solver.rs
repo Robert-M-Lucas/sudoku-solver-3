@@ -24,7 +24,6 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
         return;
     }
 
-    // TODO: Test optimal capacities, maybe try stack vec
     // let mut to_revert: Vec<(u8, u8)> = Vec::with_capacity(16);
     let mut to_revert: StackVec128<(u8, u8)> = StackVec128::new();
 
