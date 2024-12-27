@@ -1,7 +1,7 @@
+use arrayvec::ArrayVec;
 use crate::board::Possibilities;
 use crate::solution::Solution;
 use itertools::iproduct;
-use stack_vec::StackVec128;
 
 pub fn solve_backtracking(mut solution: Solution) -> Option<Solution> {
     // Dumb thing due to possible invalid inputs
@@ -10,8 +10,9 @@ pub fn solve_backtracking(mut solution: Solution) -> Option<Solution> {
     }
 
     let possibilities = Possibilities::from_solution(&solution);
+    let mut to_revert_stack: ArrayVec<(u8, u8), {81 * 81}> = ArrayVec::new();
 
-    recursively_attempt(possibilities, &mut solution);
+    recursively_attempt(possibilities, &mut solution, &mut to_revert_stack);
     if solution.solved() {
         Some(solution)
     } else {
@@ -19,13 +20,14 @@ pub fn solve_backtracking(mut solution: Solution) -> Option<Solution> {
     }
 }
 
-pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solution) {
+pub fn recursively_attempt<const C: usize>(mut possibilities: Possibilities, solution: &mut Solution, to_revert_stack: &mut ArrayVec<(u8, u8), C>) {
     if solution.solved() {
         return;
     }
 
     // let mut to_revert: Vec<(u8, u8)> = Vec::with_capacity(16);
-    let mut to_revert: StackVec128<(u8, u8)> = StackVec128::new();
+    // let mut to_revert: ArrayVec<(u8, u8), 81> = ArrayVec::new(); // 8.9
+    let prev_to_revert_stack = to_revert_stack.len();
 
     let mut change = true;
     let mut first_pass = true;
@@ -64,13 +66,13 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
 
                 if count == 0 {
                     // println!("A");
-                    solution.undo(&to_revert);
+                    solution.undo(to_revert_stack, prev_to_revert_stack);
                     return;
                 }
 
                 if count == 1 {
                     let val = cell_possibilities.find_single_bit();
-                    to_revert.push((x as u8, y as u8));
+                    to_revert_stack.push((x as u8, y as u8));
                     solution.set(x, y, val);
                     possibilities.update_found(x, y, val);
                     if first_pass {
@@ -103,13 +105,13 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                 for (n, x) in singles_data.iter().enumerate() {
                     if *x <= 8 {
                         if solution.get(*x as usize, y) != 9 {
-                            solution.undo(&to_revert);
+                            solution.undo(to_revert_stack, prev_to_revert_stack);
                             return;
                         }
 
                         solution.set(*x as usize, y, n as u8);
                         change = true;
-                        to_revert.push((*x, y as u8));
+                        to_revert_stack.push((*x, y as u8));
                         possibilities.update_found(*x as usize, y, n as u8);
                     }
                 }
@@ -150,13 +152,13 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
             for (n, y) in singles_data.iter().enumerate() {
                 if *y <= 8 {
                     if solution.get(x, *y as usize) != 9 {
-                        solution.undo(&to_revert);
+                        solution.undo(to_revert_stack, prev_to_revert_stack);
                         return;
                     }
 
                     solution.set(x, *y as usize, n as u8);
                     change = true;
-                    to_revert.push((x as u8, *y));
+                    to_revert_stack.push((x as u8, *y));
                     possibilities.update_found(x, *y as usize, n as u8);
                 }
             }
@@ -195,13 +197,13 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
                     );
 
                     if solution.get(x, y) != 9 {
-                        solution.undo(&to_revert);
+                        solution.undo(to_revert_stack, prev_to_revert_stack);
                         return;
                     }
 
                     solution.set(x, y, n as u8);
                     change = true;
-                    to_revert.push((x as u8, y as u8));
+                    to_revert_stack.push((x as u8, y as u8));
                     possibilities.update_found(x, y, n as u8);
                 }
             }
@@ -216,7 +218,7 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
     // println!("{x} {y}");
     // return;
 
-    to_revert.push((x as u8, y as u8));
+    to_revert_stack.push((x as u8, y as u8));
     let cell_possibilites = possibilities.get(x, y);
     for n in 0..9 {
         if !cell_possibilites.has(n) {
@@ -228,12 +230,12 @@ pub fn recursively_attempt(mut possibilities: Possibilities, solution: &mut Solu
         let mut new_possibilites = possibilities.clone();
         new_possibilites.update_found(x, y, n);
 
-        recursively_attempt(new_possibilites, solution);
+        recursively_attempt(new_possibilites, solution, to_revert_stack);
 
         if solution.solved() {
             return;
         }
     }
 
-    solution.undo(&to_revert);
+    solution.undo(to_revert_stack, prev_to_revert_stack);
 }

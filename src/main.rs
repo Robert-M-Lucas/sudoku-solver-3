@@ -1,79 +1,38 @@
-use std::fs;
+use std::cmp::max;
 use crate::solver::solve_backtracking;
-use solution::Solution;
 use std::hint::black_box;
 use std::io::{stdout, Write};
 use std::time::Instant;
 use color_print::{cprint, cprintln};
 use itertools::Itertools;
+use rayon::prelude::*;
 use thousands::Separable;
 
 mod board;
 mod solution;
 mod solver;
+mod util;
 
-fn load_puzzles(name: &str) -> Vec<(Solution, Option<Solution>)> {
-    let mut puzzles = Vec::new();
-    let mut i: usize = 0;
-    loop {
-        let Ok(ps) = fs::read_to_string(format!("converted/{name}_{i}_puzzle.txt")) else { break; };
-        let Ok(ss) = fs::read_to_string(format!("converted/{name}_{i}_solution.txt")) else { break; };
+const INDIVIDUAL_RUNS: usize = 100_000;
+const MIXED_RUNS: usize = 100_000;
+const INDIVIDUAL_PAR_RUNS: usize = 1_000_000;
+const MIXED_PAR_RUNS: usize = 1_000_000;
 
-        if ss.chars().next().unwrap() != '!' {
-            puzzles.push(
-                (Solution::load_string(ps), Some(Solution::load_string(ss)))
-            );
-        }
-        else {
-            puzzles.push(
-                (Solution::load_string(ps), None)
-            );
-        }
-
-
-        i += 1;
-    }
-
-    println!("Loaded {i} {name} puzzles");
-
-    puzzles
-}
-
-fn title_case(name: &str) -> String {
-    let mut sb = String::new();
-    let mut prev_space = true;
-    for c in name.chars() {
-        let c = if c == '_' { ' ' } else { c };
-        if c == ' ' {
-            prev_space = true;
-            sb.push(c);
-            continue;
-        }
-
-        if prev_space {
-            sb.push(c.to_ascii_uppercase());
-            prev_space = false;
-            continue;
-        }
-
-        sb.push(c);
-    }
-    sb
-}
 
 fn main() {
     let mut puzzles = Vec::new();
 
     cprintln!("<b, bold>Loading puzzles...");
     for name in ["very_easy", "easy", "medium", "hard"] {
-        puzzles.push((name, load_puzzles(name)))
+        puzzles.push((util::title_case(name), util::load_puzzles(name)))
     }
+    let longest_name = puzzles.iter().fold(0, |c, (n, _)| max(n.chars().count(), c));
     cprintln!("<g, bold>Done");
 
     cprint!("<b, bold>Validating solver... ");
 
     for (name, puzzles) in &puzzles {
-        let name = title_case(name);
+        let name = format!("{:>width$}", name, width=longest_name);
         for (i, (puzzle, solution)) in puzzles.iter().enumerate() {
             let s = solve_backtracking(puzzle.clone());
             let solution = solution.clone();
@@ -100,9 +59,8 @@ fn main() {
 
     cprintln!("<b, bold>Measuring performance...");
 
-    const INDIVIDUAL_RUNS: usize = 100_000;
     for (name, puzzles) in &puzzles {
-        let name = title_case(name);
+        let name = format!("{:<width$}", name, width=longest_name);
         let puzzles = puzzles.iter().map(|(s, _)| s.clone()).collect_vec();
         let total_solved = INDIVIDUAL_RUNS * puzzles.len();
         cprint!("<b, bold>Timing {name} [{} runs | {} puzzles]", INDIVIDUAL_RUNS.separate_with_commas(), total_solved.separate_with_commas());
@@ -124,50 +82,74 @@ fn main() {
         );
     }
 
-    const MIXED_RUNS: usize = 100_000;
-    let puzzles = puzzles.into_iter().map(|(_, v)| v).flatten().map(|(p, _)| p).collect_vec();
-    let total_solved = MIXED_RUNS * puzzles.len();
+    let a_puzzles = puzzles.iter().map(|(_, v)| v).flatten().map(|(p, _)| p.clone()).collect_vec();
+    let total_solved = MIXED_RUNS * a_puzzles.len();
     cprint!("<b, bold>Timing mixed [{} runs | {} puzzles]", MIXED_RUNS.separate_with_commas(), total_solved.separate_with_commas());
     stdout().flush().ok();
     let start = Instant::now();
     for _ in 0..MIXED_RUNS {
-        for puzzle in &puzzles {
+        for puzzle in &a_puzzles {
             let s = solve_backtracking(puzzle.clone());
             black_box(s);
         }
     }
     let duration = start.elapsed();
 
-    cprintln!("\r<g, bold>All $ Total solved: {} | Duration: {:?} | Time per: {:?} | Per second: {}",
+    let all_text = format!("{:<width$}", "All", width=longest_name);
+    cprintln!("\r<g, bold>{} $ Total solved: {} | Duration: {:?} | Time per: {:?} | Per second: {}",
+        all_text,
         total_solved.separate_with_commas(),
         duration,
         duration / total_solved as u32,
         (1f64 / (duration / total_solved as u32).as_secs_f64()) as usize,
     );
 
-    // let sample = Solution::load("data/sudoku.txt");
-    //
-    // // println!("{:?}", Possibilities::from_solution(&sample));
-    //
-    // let start = Instant::now();
-    // let runs = 1_000_000;
-    // for _ in 0..runs {
-    //     let solution = solve_backtracking(sample.clone());
-    //     black_box(solution);
-    // }
-    // let duration = start.elapsed();
-    //
-    // if let Some(solution) = solve_backtracking(sample) {
-    //     println!("{}", solution);
-    // } else {
-    //     println!("No solution found");
-    // }
-    //
-    // println!(
-    //     "Runs: {} | Duration: {:?} | Time per: {:?} | Per second: {}",
-    //     runs.separate_with_commas(),
-    //     duration,
-    //     duration / runs,
-    //     (1f64 / (duration / runs).as_secs_f64()) as usize,
-    // );
+    cprintln!("<b, bold>{:-^101}", "Parallel Tests");
+
+    for (name, puzzles) in &puzzles {
+        let name = format!("{:<width$}", name, width=longest_name);
+        let puzzles = puzzles.iter().map(|(s, _)| s.clone()).collect_vec();
+        let total_solved = INDIVIDUAL_PAR_RUNS * puzzles.len();
+        cprint!("<b, bold>Timing {name} [{} runs | {} puzzles]", INDIVIDUAL_PAR_RUNS.separate_with_commas(), total_solved.separate_with_commas());
+        stdout().flush().ok();
+        let start = Instant::now();
+        let mut x = vec![1, 2, 3];
+        (0..INDIVIDUAL_PAR_RUNS).into_par_iter().for_each(|_| {
+            for puzzle in &puzzles {
+                let s = solve_backtracking(puzzle.clone());
+                black_box(s);
+            }
+        });
+
+        let duration = start.elapsed();
+
+        cprintln!("\r<g, bold>{name} $ Total solved: {} | Duration: {:?} | Time per: {:?} | Per second: {}",
+            total_solved.separate_with_commas(),
+            duration,
+            duration / total_solved as u32,
+            (1f64 / (duration / total_solved as u32).as_secs_f64()) as usize,
+        );
+    }
+
+    let a_puzzles = puzzles.iter().map(|(_, v)| v).flatten().map(|(p, _)| p.clone()).collect_vec();
+    let total_solved = MIXED_PAR_RUNS * a_puzzles.len();
+    cprint!("<b, bold>Timing mixed [{} runs | {} puzzles]", MIXED_PAR_RUNS.separate_with_commas(), total_solved.separate_with_commas());
+    stdout().flush().ok();
+    let start = Instant::now();
+    (0..MIXED_PAR_RUNS).into_par_iter().for_each(|_| {
+        for puzzle in &a_puzzles {
+            let s = solve_backtracking(puzzle.clone());
+            black_box(s);
+        }
+    });
+    let duration = start.elapsed();
+
+    let all_text = format!("{:<width$}", "All", width=longest_name);
+    cprintln!("\r<g, bold>{} $ Total solved: {} | Duration: {:?} | Time per: {:?} | Per second: {}",
+        all_text,
+        total_solved.separate_with_commas(),
+        duration,
+        duration / total_solved as u32,
+        (1f64 / (duration / total_solved as u32).as_secs_f64()) as usize,
+    );
 }

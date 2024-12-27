@@ -1,7 +1,8 @@
+use crate::board::Possibilities;
+use arrayvec::ArrayVec;
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::Path;
-use crate::board::Possibilities;
 
 #[derive(Clone)]
 pub struct Solution {
@@ -10,6 +11,7 @@ pub struct Solution {
 }
 
 impl Solution {
+    #[allow(dead_code)]
     pub fn load<P: AsRef<Path>>(path: P) -> Self {
         let contents = fs::read_to_string(path).expect("File read error");
         Self::load_string(contents)
@@ -68,10 +70,12 @@ impl Solution {
         true
     }
 
-    pub fn undo(&mut self, revert: &[(u8, u8)]) {
-        for (x, y) in revert {
-            self.set(*x as usize, *y as usize, 9);
+    pub fn undo<const C: usize>(&mut self, revert: &mut ArrayVec<(u8, u8), C>, prev_size: usize) {
+        for _ in prev_size..revert.len() {
+            let (x, y) = revert.pop().unwrap();
+            self.set(x as usize, y as usize, 9);
         }
+        debug_assert!(revert.len() == prev_size)
     }
 
     #[inline]

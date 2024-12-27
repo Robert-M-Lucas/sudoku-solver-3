@@ -4,8 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bitvec = "1.0.1"
+arrayvec = "0.7.6"
+# bitvec = "1.0.1"
 color-print = "0.3.7"
 itertools = "0.13.0"
-stack-vec = "0.1.0"
+rayon = "1.10.0"
+# pad = "0.1.6"
+# stack-vec = "0.1.0"
 thousands = "0.2.0"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+overflow-checks = false
+panic = "abort"
