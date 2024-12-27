@@ -113,7 +113,6 @@ fn main() {
         cprint!("<b, bold>Timing {name} [{} runs | {} puzzles]", INDIVIDUAL_PAR_RUNS.separate_with_commas(), total_solved.separate_with_commas());
         stdout().flush().ok();
         let start = Instant::now();
-        let mut x = vec![1, 2, 3];
         (0..INDIVIDUAL_PAR_RUNS).into_par_iter().for_each(|_| {
             for puzzle in &puzzles {
                 let s = solve_backtracking(puzzle.clone());
